@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BG Display</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      color: lime;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    #bg {
+      font-size: 14vw;
+      margin: 0;
+    }
+
+    #clock {
+      font-size: 8vw;
+      margin-top: 1vh;
+      color: cyan; /* ← you can change this to any color like 'white', '#00ffff', etc. */
+    }
+  </style>
+</head>
+<body>
+  <div id="bg">Loading...</div>
+  <div id="clock">--:--</div>
+
+  <script>
+    // Optional: Map trend direction to emoji
+    function getTrendArrow(direction) {
+      const arrows = {
+        'DoubleUp': '⬆️⬆️',
+        'SingleUp': '⬆️',
+        'FortyFiveUp': '↗️',
+        'Flat': '→',
+        'FortyFiveDown': '↘️',
+        'SingleDown': '⬇️',
+        'DoubleDown': '⬇️⬇️',
+        'NOT COMPUTABLE': '❓',
+        'RATE OUT OF RANGE': '⚠️'
+      };
+      return arrows[direction] || '';
+    }
+
+    async function fetchBG() {
+      try {
+        const proxyUrl = "https://corsproxy.io/?";
+        const nightscoutUrl = "https://rachaelcgm.ignorelist.com/api/v1/entries.json?count=1";
+        const response = await fetch(proxyUrl + encodeURIComponent(nightscoutUrl));
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        console.log("Fetched data:", data);
+
+        const entry = data[0];
+        const mgdl = entry.sgv;
+        const mmol = (mgdl / 18).toFixed(1);
+        const trend = getTrendArrow(entry.direction);
+
+        document.getElementById("bg").textContent = `${mmol} mmol/L ${trend}`;
+      } catch (e) {
+        document.getElementById("bg").textContent = "⚠️ Error";
+        console.error("Error fetching BG:", e);
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById("clock").textContent = `${hours}:${minutes}`;
+    }
+
+    fetchBG();
+    updateClock();
+    setInterval(fetchBG, 60000);     // Every 60 seconds
+    setInterval(updateClock, 1000);  // Every second
+  </script>
+</body>
+</html>
