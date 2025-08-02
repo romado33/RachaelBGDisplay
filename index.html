@@ -26,7 +26,7 @@
     #clock {
       font-size: 8vw;
       margin-top: 1vh;
-      color: cyan; /* ← you can change this to any color like 'white', '#00ffff', etc. */
+      color: cyan; /* You can change this to any color */
     }
   </style>
 </head>
@@ -35,7 +35,7 @@
   <div id="clock">--:--</div>
 
   <script>
-    // Optional: Map trend direction to emoji
+    // Map Nightscout trend directions to arrow emojis
     function getTrendArrow(direction) {
       const arrows = {
         'DoubleUp': '⬆️⬆️',
@@ -53,14 +53,14 @@
 
     async function fetchBG() {
       try {
-        const proxyUrl = "https://corsproxy.io/?";
+        // Use AllOrigins CORS proxy (works on Safari/iPad)
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
         const nightscoutUrl = "https://rachaelcgm.ignorelist.com/api/v1/entries.json?count=1";
         const response = await fetch(proxyUrl + encodeURIComponent(nightscoutUrl));
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        console.log("Fetched data:", data);
 
+        const data = await response.json();
         const entry = data[0];
         const mgdl = entry.sgv;
         const mmol = (mgdl / 18).toFixed(1);
@@ -80,10 +80,13 @@
       document.getElementById("clock").textContent = `${hours}:${minutes}`;
     }
 
+    // Initial load
     fetchBG();
     updateClock();
-    setInterval(fetchBG, 60000);     // Every 60 seconds
-    setInterval(updateClock, 1000);  // Every second
+
+    // Periodic updates
+    setInterval(fetchBG, 60000);     // BG update every 60 seconds
+    setInterval(updateClock, 1000);  // Clock update every second
   </script>
 </body>
 </html>
