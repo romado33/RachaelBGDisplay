@@ -1,92 +1,62 @@
+<!-- save as clock.html in your GitHub repo -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>BG Display</title>
+  <title>BG Clock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      background-color: black;
-      color: lime;
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
+      background: black;
+      color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      text-align: center;
     }
-
     #bg {
-      font-size: 14vw;
-      margin: 0;
+      font-size: 4em;
+      margin: 0.2em;
     }
-
-    #clock {
-      font-size: 8vw;
-      margin-top: 1vh;
-      color: cyan; /* You can change this to any color */
+    #trend {
+      font-size: 2em;
+    }
+    #time {
+      font-size: 1.5em;
+      margin-top: 0.5em;
     }
   </style>
 </head>
 <body>
-  <div id="bg">Loading...</div>
-  <div id="clock">--:--</div>
+  <div id="bg">--</div>
+  <div id="trend">Loading...</div>
+  <div id="time">--:--</div>
 
   <script>
-    // Map Nightscout trend directions to arrow emojis
-    function getTrendArrow(direction) {
-      const arrows = {
-        'DoubleUp': '⬆️⬆️',
-        'SingleUp': '⬆️',
-        'FortyFiveUp': '↗️',
-        'Flat': '→',
-        'FortyFiveDown': '↘️',
-        'SingleDown': '⬇️',
-        'DoubleDown': '⬇️⬇️',
-        'NOT COMPUTABLE': '❓',
-        'RATE OUT OF RANGE': '⚠️'
-      };
-      return arrows[direction] || '';
-    }
+    const url = "https://rachaelcgm.ignorelist.com:3389/api/v1/entries.json?count=1";
 
     async function fetchBG() {
       try {
-        // Use AllOrigins CORS proxy (works on Safari/iPad)
-        const proxyUrl = "https://api.allorigins.win/raw?url=";
-        const nightscoutUrl = "https://rachaelcgm.ignorelist.com/api/v1/entries.json?count=1";
-        const response = await fetch(proxyUrl + encodeURIComponent(nightscoutUrl));
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+        const response = await fetch(url, { mode: 'cors' });
         const data = await response.json();
-        const entry = data[0];
-        const mgdl = entry.sgv;
-        const mmol = (mgdl / 18).toFixed(1);
-        const trend = getTrendArrow(entry.direction);
-
-        document.getElementById("bg").textContent = `${mmol} mmol/L ${trend}`;
-      } catch (e) {
-        document.getElementById("bg").textContent = "⚠️ Error";
-        console.error("Error fetching BG:", e);
+        if (data && data.length > 0) {
+          const entry = data[0];
+          document.getElementById("bg").textContent = entry.sgv;
+          document.getElementById("trend").textContent = entry.direction || "→";
+          document.getElementById("time").textContent = new Date(entry.date).toLocaleTimeString();
+        } else {
+          document.getElementById("trend").textContent = "No data";
+        }
+      } catch (err) {
+        document.getElementById("trend").textContent = "Error";
+        console.error(err);
       }
     }
 
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById("clock").textContent = `${hours}:${minutes}`;
-    }
-
-    // Initial load
     fetchBG();
-    updateClock();
-
-    // Periodic updates
-    setInterval(fetchBG, 60000);     // BG update every 60 seconds
-    setInterval(updateClock, 1000);  // Clock update every second
+    setInterval(fetchBG, 30000); // update every 30s
   </script>
 </body>
 </html>
